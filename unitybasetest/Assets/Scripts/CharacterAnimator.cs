@@ -120,9 +120,7 @@ public class CharacterAnimator : MonoBehaviour
 
         bool grounded = _cc != null && _cc.isGrounded;
 
-        // Interact key
-        if (Input.GetKeyDown(KeyCode.E))
-            StartCoroutine(InteractRoutine());
+        // NOTE: Phím E được xử lý bởi InteractionDetector → TriggerInteract()
 
         // Phase tăng theo speed
         _phase += Time.deltaTime * runFrequency * Mathf.PI * 2f * Mathf.Max(speed, 0.3f);
@@ -250,6 +248,13 @@ public class CharacterAnimator : MonoBehaviour
     }
 
     // ────────── Death ──────────
+    /// <summary>Gọi từ InteractionDetector khi nhấn E tương tác.</summary>
+    public void TriggerInteract()
+    {
+        if (_isInteracting || _isDead) return;
+        StartCoroutine(InteractRoutine());
+    }
+
     /// <summary>Gọi từ bên ngoài khi nhân vật chết.</summary>
     public void TriggerDeath()
     {

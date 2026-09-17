@@ -23,6 +23,7 @@ public class PlayerController : MonoBehaviour
     public float gravity = -20f;
 
     private CharacterController _controller;
+    private FollowCamera        _cam;
     private Vector3 _velocity;
     private bool _isDead = false;
 
@@ -32,6 +33,7 @@ public class PlayerController : MonoBehaviour
     void Awake()
     {
         _controller = GetComponent<CharacterController>();
+        _cam = Camera.main?.GetComponent<FollowCamera>();
     }
 
     void Update()
@@ -42,21 +44,21 @@ public class PlayerController : MonoBehaviour
         float horizontal = Input.GetAxisRaw("Horizontal"); // A / D
         float vertical   = Input.GetAxisRaw("Vertical");   // W / S
 
-        Vector3 inputDir = new Vector3(horizontal, 0f, vertical).normalized;
+        // --- Hướng di chuyển theo camera ---
+        Vector3 camFwd   = _cam != null ? _cam.CameraForwardFlat : Vector3.forward;
+        Vector3 camRight = _cam != null ? _cam.CameraRightFlat   : Vector3.right;
 
-        // --- Di chuyển ---
-        if (inputDir.magnitude >= 0.01f)
+        Vector3 moveDir = (camFwd * vertical + camRight * horizontal).normalized;
+
+        // --- Di chuyển + xoay mặt ---
+        if (moveDir.magnitude >= 0.01f)
         {
-            // Xoay nhân vật mượt theo hướng di chuyển
-            float targetAngle = Mathf.Atan2(inputDir.x, inputDir.z) * Mathf.Rad2Deg;
-            float angle = Mathf.MoveTowardsAngle(
-                transform.eulerAngles.y,
-                targetAngle,
-                rotationSpeed * Time.deltaTime
-            );
-            transform.rotation = Quaternion.Euler(0f, angle, 0f);
+            // Nhân vật xoay mặt mượt theo hướng đang đi
+            Quaternion targetRot = Quaternion.LookRotation(moveDir);
+            transform.rotation = Quaternion.RotateTowards(
+                transform.rotation, targetRot, rotationSpeed * Time.deltaTime);
 
-            _controller.Move(inputDir * moveSpeed * Time.deltaTime);
+            _controller.Move(moveDir * moveSpeed * Time.deltaTime);
         }
 
         // --- Nhảy (Space) ---
