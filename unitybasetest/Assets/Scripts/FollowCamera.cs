@@ -2,15 +2,18 @@ using UnityEngine;
 
 /// <summary>
 /// Third-person orbit camera.
-/// - Giữ chuột PHẢI (RMB) để xoay quanh nhân vật
+/// - Kéo chuột phải / giữ RMB để xoay quanh nhân vật (pitch + yaw)
 /// - Scroll wheel để zoom in/out
-/// - Cursor luôn hiển thị để click UI
-/// - Nhân vật di chuyển theo hướng camera nhìn
+/// - Nhân vật luôn di chuyển theo hướng camera nhìn
+/// Gắn vào Main Camera, kéo Player vào Target.
 /// </summary>
 public class FollowCamera : MonoBehaviour
 {
     [Header("Target")]
+    [Tooltip("Transform của nhân vật cần theo dõi")]
     public Transform target;
+
+    [Tooltip("Offset điểm nhìn tính từ gốc nhân vật (để nhìn vào ngực/đầu)")]
     public Vector3 pivotOffset = new Vector3(0f, 1.4f, 0f);
 
     [Header("Distance")]
@@ -19,9 +22,11 @@ public class FollowCamera : MonoBehaviour
     public float maxDistance = 12f;
     public float zoomSpeed   = 4f;
 
-    [Header("Rotation (giữ RMB)")]
+    [Header("Rotation")]
     public float sensitivityX = 200f;
     public float sensitivityY = 150f;
+
+    [Tooltip("Giới hạn góc nhìn trên/dưới")]
     public float minPitch = -20f;
     public float maxPitch =  60f;
 
@@ -30,52 +35,61 @@ public class FollowCamera : MonoBehaviour
     public float rotSmooth = 12f;
 
     [Header("Collision")]
+    [Tooltip("Tránh camera xuyên qua tường")]
     public LayerMask collisionMask = ~0;
     public float collisionRadius = 0.2f;
 
-    // ── State ──
-    float _yaw;
-    float _pitch;
+    // ── State ──────────────────────────────
+    float _yaw;    // xoay ngang (quanh Y)
+    float _pitch;  // xoay dọc  (quanh X)
     float _currentDist;
+
     Vector3    _smoothPos;
     Quaternion _smoothRot;
 
-    // ── Init ──
+    // ── Init ───────────────────────────────
     void Start()
     {
+        // Khởi tạo yaw/pitch từ góc camera hiện tại
         _yaw   = transform.eulerAngles.y;
         _pitch = transform.eulerAngles.x;
         _currentDist = distance;
+
         _smoothPos = transform.position;
         _smoothRot = transform.rotation;
 
-        // Cursor luôn hiển thị để click được UI icon
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible   = true;
+        // Ẩn và khoá con trỏ chuột
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible   = false;
     }
 
+    // ── Input + logic ──────────────────────
     void LateUpdate()
     {
         if (target == null) return;
 
-        // ── Xoay: CHỈ khi giữ RMB ──
-        if (Input.GetMouseButton(1))
-        {
-            _yaw   += Input.GetAxis("Mouse X") * sensitivityX * Time.deltaTime;
-            _pitch -= Input.GetAxis("Mouse Y") * sensitivityY * Time.deltaTime;
-            _pitch  = Mathf.Clamp(_pitch, minPitch, maxPitch);
-        }
+        HandleCursorLock();
+
+        // ── Mouse input ──
+        float mouseX = Input.GetAxis("Mouse X") * sensitivityX * Time.deltaTime;
+        float mouseY = Input.GetAxis("Mouse Y") * sensitivityY * Time.deltaTime;
+
+        _yaw   += mouseX;
+        _pitch -= mouseY;
+        _pitch  = Mathf.Clamp(_pitch, minPitch, maxPitch);
 
         // ── Zoom ──
         float scroll = Input.GetAxis("Mouse ScrollWheel");
         _currentDist -= scroll * zoomSpeed;
         _currentDist  = Mathf.Clamp(_currentDist, minDistance, maxDistance);
 
-        // ── Vị trí camera ──
+        // ── Tính vị trí camera ──
         Quaternion targetRot = Quaternion.Euler(_pitch, _yaw, 0f);
         Vector3    pivot     = target.position + pivotOffset;
+        Vector3    desiredPos = pivot - targetRot * Vector3.forward * _currentDist;
 
-        float   safeDist = GetSafeDistance(pivot, targetRot, _currentDist);
+        // ── Camera collision ──
+        float safeDist = GetSafeDistance(pivot, targetRot, _currentDist);
         Vector3 finalPos = pivot - targetRot * Vector3.forward * safeDist;
 
         // ── Smooth ──
@@ -86,15 +100,36 @@ public class FollowCamera : MonoBehaviour
         transform.rotation = _smoothRot;
     }
 
+    // Tránh camera xuyên tường bằng Spherecast
     float GetSafeDistance(Vector3 pivot, Quaternion rot, float wantedDist)
     {
         Vector3 dir = -(rot * Vector3.forward);
         if (Physics.SphereCast(pivot, collisionRadius, dir, out RaycastHit hit,
                                wantedDist, collisionMask, QueryTriggerInteraction.Ignore))
+        {
             return Mathf.Max(hit.distance - collisionRadius, minDistance);
+        }
         return wantedDist;
     }
 
+    // Ẩn/hiện cursor khi nhấn Escape
+    void HandleCursorLock()
+    {
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible   = true;
+        }
+        if (Input.GetMouseButtonDown(0) && Cursor.lockState == CursorLockMode.None)
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible   = false;
+        }
+    }
+
+    /// <summary>
+    /// Hướng nhìn phẳng của camera (dùng bởi PlayerController để di chuyển theo camera).
+    /// </summary>
     public Vector3 CameraForwardFlat =>
         Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
 
