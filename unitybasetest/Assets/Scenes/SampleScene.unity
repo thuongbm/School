@@ -856,6 +856,7 @@ GameObject:
   - component: {fileID: 418548385}
   - component: {fileID: 418548384}
   - component: {fileID: 418548383}
+  - component: {fileID: 418548386}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -921,6 +922,31 @@ Transform:
   - {fileID: 394178375}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &418548386
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 418548382}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d8063de6cd6a1a4cab08e8dc0d7bb46, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  runFrequency: 2.8
+  runLegAngle: 30
+  runArmAngle: 25
+  runLeanAngle: 8
+  idleBobSpeed: 1
+  idleBobAmount: 0.012
+  jumpSquashY: 0.85
+  jumpStretchY: 1.12
+  jumpLegSpread: 20
+  interactDuration: 1
+  interactLeanFwd: 20
+  deathFallDuration: 0.6
+  blendSpeed: 10
 --- !u!1 &421062650
 GameObject:
   m_ObjectHideFlags: 0

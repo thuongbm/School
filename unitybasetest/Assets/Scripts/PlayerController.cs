@@ -24,6 +24,10 @@ public class PlayerController : MonoBehaviour
 
     private CharacterController _controller;
     private Vector3 _velocity;
+    private bool _isDead = false;
+
+    /// <summary>Để CharacterAnimator kiểm tra trạng thái chết.</summary>
+    public bool IsDead => _isDead;
 
     void Awake()
     {
@@ -32,6 +36,8 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
+        if (_isDead) return;
+
         // --- Input WASD ---
         float horizontal = Input.GetAxisRaw("Horizontal"); // A / D
         float vertical   = Input.GetAxisRaw("Vertical");   // W / S
@@ -66,6 +72,15 @@ public class PlayerController : MonoBehaviour
 
         _velocity.y += gravity * Time.deltaTime;
         _controller.Move(_velocity * Time.deltaTime);
+    }
+
+    /// <summary>Khoá mọi input và kích hoạt animation chết.</summary>
+    public void Die()
+    {
+        if (_isDead) return;
+        _isDead = true;
+        _velocity = Vector3.zero;
+        GetComponent<CharacterAnimator>()?.TriggerDeath();
     }
 }
 
