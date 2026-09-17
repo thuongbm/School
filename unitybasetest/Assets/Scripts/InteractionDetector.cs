@@ -134,6 +134,8 @@ public class InteractionDetector : MonoBehaviour
     // ── Update ──────────────────────────────────────────────
     void Update()
     {
+        if (_promptRect == null) BuildUI();
+
         DetectNearest();
         PositionPrompt();
         HandleKey();
@@ -166,21 +168,21 @@ public class InteractionDetector : MonoBehaviour
         _currentTr  = bestTr;
 
         bool show = _current != null;
-        if (_promptRect.gameObject.activeSelf != show)
+        if (_promptRect != null && _promptRect.gameObject.activeSelf != show)
             _promptRect.gameObject.SetActive(show);
 
         if (show)
         {
-            _labelText.text     = _current.InteractLabel;
-            _promptBtn.interactable = _current.CanInteract;
-            _keyBadgeBg.color   = _current.CanInteract ? colorReady : colorDisabled;
+            if (_labelText != null) _labelText.text = _current.InteractLabel;
+            if (_promptBtn != null) _promptBtn.interactable = _current.CanInteract;
+            if (_keyBadgeBg != null) _keyBadgeBg.color = _current.CanInteract ? colorReady : colorDisabled;
         }
     }
 
     // ── Đặt vị trí prompt theo vật thể ─────────────────────
     void PositionPrompt()
     {
-        if (_current == null) return;
+        if (_current == null || _promptRect == null) return;
 
         var cam = Camera.main;
         if (cam == null || _canvasRect == null) return;
