@@ -58,9 +58,9 @@ public class FollowCamera : MonoBehaviour
         _smoothPos = transform.position;
         _smoothRot = transform.rotation;
 
-        // Ẩn và khoá con trỏ chuột
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible   = false;
+        // Con trỏ luôn hiện để có thể click UI icon
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible   = true;
     }
 
     // ── Input + logic ──────────────────────
@@ -68,15 +68,16 @@ public class FollowCamera : MonoBehaviour
     {
         if (target == null) return;
 
-        HandleCursorLock();
-
-        // ── Mouse input ──
-        float mouseX = Input.GetAxis("Mouse X") * sensitivityX * Time.deltaTime;
-        float mouseY = Input.GetAxis("Mouse Y") * sensitivityY * Time.deltaTime;
-
-        _yaw   += mouseX;
-        _pitch -= mouseY;
-        _pitch  = Mathf.Clamp(_pitch, minPitch, maxPitch);
+        // ── Chỉ xoay camera khi ĐANG giữ RMB ──
+        bool rmb = Input.GetMouseButton(1);
+        if (rmb)
+        {
+            float mouseX = Input.GetAxis("Mouse X") * sensitivityX * Time.deltaTime;
+            float mouseY = Input.GetAxis("Mouse Y") * sensitivityY * Time.deltaTime;
+            _yaw   += mouseX;
+            _pitch -= mouseY;
+            _pitch  = Mathf.Clamp(_pitch, minPitch, maxPitch);
+        }
 
         // ── Zoom ──
         float scroll = Input.GetAxis("Mouse ScrollWheel");
@@ -86,7 +87,6 @@ public class FollowCamera : MonoBehaviour
         // ── Tính vị trí camera ──
         Quaternion targetRot = Quaternion.Euler(_pitch, _yaw, 0f);
         Vector3    pivot     = target.position + pivotOffset;
-        Vector3    desiredPos = pivot - targetRot * Vector3.forward * _currentDist;
 
         // ── Camera collision ──
         float safeDist = GetSafeDistance(pivot, targetRot, _currentDist);
@@ -112,20 +112,7 @@ public class FollowCamera : MonoBehaviour
         return wantedDist;
     }
 
-    // Ẩn/hiện cursor khi nhấn Escape
-    void HandleCursorLock()
-    {
-        if (Input.GetKeyDown(KeyCode.Escape))
-        {
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible   = true;
-        }
-        if (Input.GetMouseButtonDown(0) && Cursor.lockState == CursorLockMode.None)
-        {
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible   = false;
-        }
-    }
+
 
     /// <summary>
     /// Hướng nhìn phẳng của camera (dùng bởi PlayerController để di chuyển theo camera).

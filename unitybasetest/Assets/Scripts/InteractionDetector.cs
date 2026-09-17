@@ -3,235 +3,233 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 
 /// <summary>
-/// Detect IInteractable gần nhất, hiển thị icon ở vị trí màn hình của vật thể.
-/// Click chuột TRÁI vào icon để tương tác.
-/// Phím E vẫn hoạt động như shortcut.
+/// Phát hiện IInteractable gần nhất bằng OverlapSphere.
+/// Hiển thị UI icon nổi đúng vị trí màn hình của vật thể.
+/// Bấm LMB (chuột trái) vào icon hoặc nhấn E để tương tác.
 /// </summary>
 public class InteractionDetector : MonoBehaviour
 {
     [Header("Detection")]
-    public float detectionRadius = 2.5f;
-    public LayerMask interactLayer = ~0;
+    public float     detectionRadius = 2.5f;
+    public LayerMask interactLayer   = ~0;
 
-    [Header("UI (tự tạo nếu để trống)")]
-    public RectTransform promptRect;  // Container icon trên Screen Space canvas
-    public Image         iconBg;
-    public Text          labelText;
-    public Button        interactBtn;
-
-    [Header("Prompt Offset (screen pixels)")]
-    public Vector2 screenOffset = new Vector2(0f, 80f); // offset từ world pos lên trên
+    [Header("Icon offset (Canvas pixels)")]
+    public Vector2 promptOffset = new Vector2(0f, 45f);
 
     [Header("Colors")]
-    public Color readyColor    = new Color(1f, 0.85f, 0f, 1f);
-    public Color hoverColor    = new Color(1f, 1f, 0.4f, 1f);
-    public Color disabledColor = new Color(0.45f, 0.45f, 0.45f, 0.7f);
+    public Color colorReady    = new Color(1f, 0.85f, 0.05f, 1f);
+    public Color colorDisabled = new Color(0.4f, 0.4f, 0.4f, 0.6f);
+    public Color bgNormal      = new Color(0.07f, 0.07f, 0.10f, 0.88f);
 
-    // ── Internal ──
-    IInteractable     _current;
-    Transform         _currentTransform;
+    // ── Private runtime ──────────────────────────────────────
+    Canvas        _canvas;
+    RectTransform _canvasRect;
+    RectTransform _promptRect;
+    Image         _promptBg;
+    Button        _promptBtn;
+    Image         _keyBadgeBg;
+    Text          _labelText;
+
+    IInteractable   _current;
+    Collider        _currentCol;
+    Transform       _currentTr;
     CharacterAnimator _anim;
-    Camera            _mainCam;
-    Canvas            _canvas;
-    bool              _isHovering;
 
-    // ═══════════════════════════════════════════════
+    // ── Awake: gọi 1 lần khi Play bắt đầu ──────────────────
     void Awake()
     {
-        _anim    = GetComponent<CharacterAnimator>();
-        _mainCam = Camera.main;
+        _anim = GetComponent<CharacterAnimator>();
 
-        if (promptRect == null) BuildScreenSpaceUI();
+        // Dọn sạch MỌI canvas cũ từ lần trước (Editor mode)
+        foreach (var old in FindObjectsOfType<Canvas>())
+            if (old.name == "InteractCanvas")
+                Destroy(old.gameObject);
 
-        SetPromptVisible(false);
-        EnsureEventSystem();
+        // Dọn EventSystem cũ
+        foreach (var es in FindObjectsOfType<EventSystem>())
+            Destroy(es.gameObject);
+
+        // Tạo EventSystem mới sạch
+        var esGO = new GameObject("EventSystem");
+        esGO.AddComponent<EventSystem>();
+        esGO.AddComponent<StandaloneInputModule>();
+
+        // Xây dựng UI mới hoàn toàn
+        BuildUI();
+
+        _promptRect.gameObject.SetActive(false);
     }
 
-    // ── Đảm bảo có EventSystem để Button hoạt động ──
-    void EnsureEventSystem()
+    // ── Xây UI ──────────────────────────────────────────────
+    void BuildUI()
     {
-        if (FindObjectOfType<EventSystem>() == null)
-        {
-            var esGO = new GameObject("EventSystem");
-            esGO.AddComponent<EventSystem>();
-            esGO.AddComponent<StandaloneInputModule>();
-        }
+        var font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+
+        // Canvas – ScreenSpaceOverlay
+        var cGO = new GameObject("InteractCanvas");
+        _canvas = cGO.AddComponent<Canvas>();
+        _canvas.renderMode   = RenderMode.ScreenSpaceOverlay;
+        _canvas.sortingOrder = 60;
+        var scaler = cGO.AddComponent<CanvasScaler>();
+        scaler.uiScaleMode         = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920f, 1080f);
+        scaler.matchWidthOrHeight  = 0.5f;
+        cGO.AddComponent<GraphicRaycaster>();   // BẮT BUỘC để nhận click
+        _canvasRect = cGO.GetComponent<RectTransform>();
+
+        // Prompt container
+        var pGO = new GameObject("InteractPrompt");
+        pGO.transform.SetParent(cGO.transform, false);
+        _promptRect = pGO.AddComponent<RectTransform>();   // AddComponent, không GetComponent
+        _promptRect.sizeDelta = new Vector2(240f, 60f);
+        _promptRect.anchorMin = _promptRect.anchorMax = new Vector2(0.5f, 0.5f);
+        _promptRect.pivot     = new Vector2(0.5f, 0.5f);
+
+        _promptBg = pGO.AddComponent<Image>();
+        _promptBg.color = bgNormal;
+
+        _promptBtn = pGO.AddComponent<Button>();
+        var bc = _promptBtn.colors;
+        bc.normalColor      = Color.white;
+        bc.highlightedColor = new Color(1.15f, 1.15f, 0.8f, 1f);
+        bc.pressedColor     = new Color(0.75f, 0.75f, 0.5f, 1f);
+        _promptBtn.colors        = bc;
+        _promptBtn.targetGraphic = _promptBg;
+        _promptBtn.onClick.AddListener(OnButtonClicked);   // runtime listener
+
+        // Badge [E]
+        var kbGO = new GameObject("KeyBadge");
+        kbGO.transform.SetParent(pGO.transform, false);
+        _keyBadgeBg = kbGO.AddComponent<Image>();
+        _keyBadgeBg.color = colorReady;
+        var kbR = kbGO.GetComponent<RectTransform>();
+        kbR.anchorMin       = new Vector2(0f, 0.5f);
+        kbR.anchorMax       = new Vector2(0f, 0.5f);
+        kbR.pivot           = new Vector2(0f, 0.5f);
+        kbR.anchoredPosition = new Vector2(8f, 0f);
+        kbR.sizeDelta        = new Vector2(44f, 44f);
+
+        var ktGO = new GameObject("KeyText");
+        ktGO.transform.SetParent(kbGO.transform, false);
+        var kt = ktGO.AddComponent<Text>();
+        kt.text = "E"; kt.font = font; kt.fontSize = 26;
+        kt.fontStyle = FontStyle.Bold; kt.color = Color.black;
+        kt.alignment = TextAnchor.MiddleCenter;
+        var ktR = ktGO.GetComponent<RectTransform>();
+        ktR.anchorMin = Vector2.zero; ktR.anchorMax = Vector2.one; ktR.sizeDelta = Vector2.zero;
+
+        // Label
+        var lblGO = new GameObject("Label");
+        lblGO.transform.SetParent(pGO.transform, false);
+        _labelText = lblGO.AddComponent<Text>();
+        _labelText.font = font; _labelText.fontSize = 18;
+        _labelText.fontStyle = FontStyle.Bold;
+        _labelText.color = Color.white;
+        _labelText.alignment = TextAnchor.MiddleLeft;
+        var lblR = lblGO.GetComponent<RectTransform>();
+        lblR.anchorMin = Vector2.zero; lblR.anchorMax = Vector2.one;
+        lblR.offsetMin = new Vector2(58f, 4f); lblR.offsetMax = new Vector2(-8f, -4f);
     }
 
-    // ── Build Screen Space UI ──────────────────────
-    void BuildScreenSpaceUI()
-    {
-        // Tìm canvas Screen Space Overlay đã có, hoặc tạo mới
-        Canvas existingCanvas = null;
-        foreach (var c in FindObjectsOfType<Canvas>())
-        {
-            if (c.renderMode == RenderMode.ScreenSpaceOverlay && c.name != "MissionCanvas")
-            { existingCanvas = c; break; }
-        }
-
-        if (existingCanvas == null)
-        {
-            var cGO = new GameObject("InteractCanvas");
-            existingCanvas = cGO.AddComponent<Canvas>();
-            existingCanvas.renderMode  = RenderMode.ScreenSpaceOverlay;
-            existingCanvas.sortingOrder = 50;
-            var scaler = cGO.AddComponent<CanvasScaler>();
-            scaler.uiScaleMode          = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution  = new Vector2(1920f, 1080f);
-            cGO.AddComponent<GraphicRaycaster>();
-        }
-        _canvas = existingCanvas;
-
-        // ── Container (prompt) ──
-        var promptGO = new GameObject("InteractPrompt");
-        promptGO.transform.SetParent(_canvas.transform, false);
-        promptRect = promptGO.AddComponent<RectTransform>();
-        promptRect.sizeDelta = new Vector2(200f, 58f);
-        promptRect.anchorMin = promptRect.anchorMax = new Vector2(0.5f, 0f);
-        promptRect.pivot     = new Vector2(0.5f, 0f);
-
-        // Nền bo tròn với màu đậm
-        iconBg = promptGO.AddComponent<Image>();
-        iconBg.color = new Color(0f, 0f, 0f, 0.78f);
-
-        // Button component để nhận click
-        interactBtn = promptGO.AddComponent<Button>();
-        var colors = interactBtn.colors;
-        colors.normalColor      = Color.white;
-        colors.highlightedColor = new Color(1f, 1f, 0.7f, 1f);
-        colors.pressedColor     = new Color(0.7f, 0.7f, 0.4f, 1f);
-        interactBtn.colors      = colors;
-        interactBtn.targetGraphic = iconBg;
-        interactBtn.onClick.AddListener(OnIconClicked);
-
-        // ── Key badge "[E]" ──
-        var keyGO  = new GameObject("KeyBadge");
-        keyGO.transform.SetParent(promptGO.transform, false);
-        var keyImg = keyGO.AddComponent<Image>();
-        keyImg.color = readyColor;
-        var keyRect  = keyGO.GetComponent<RectTransform>();
-        keyRect.anchorMin = new Vector2(0f, 0f);
-        keyRect.anchorMax = new Vector2(0f, 1f);
-        keyRect.pivot     = new Vector2(0f, 0.5f);
-        keyRect.offsetMin = new Vector2(6f,  6f);
-        keyRect.offsetMax = new Vector2(52f, -6f);
-
-        var keyTxtGO = new GameObject("KeyText");
-        keyTxtGO.transform.SetParent(keyGO.transform, false);
-        var keyTxt  = keyTxtGO.AddComponent<Text>();
-        keyTxt.text      = "E";
-        keyTxt.fontSize  = 26;
-        keyTxt.fontStyle = FontStyle.Bold;
-        keyTxt.color     = Color.black;
-        keyTxt.alignment = TextAnchor.MiddleCenter;
-        keyTxt.font      = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        var ktRect = keyTxtGO.GetComponent<RectTransform>();
-        ktRect.anchorMin = Vector2.zero;
-        ktRect.anchorMax = Vector2.one;
-        ktRect.offsetMin = Vector2.zero;
-        ktRect.offsetMax = Vector2.zero;
-
-        // ── Label ──
-        var lblGO  = new GameObject("Label");
-        lblGO.transform.SetParent(promptGO.transform, false);
-        labelText  = lblGO.AddComponent<Text>();
-        labelText.fontSize  = 18;
-        labelText.color     = Color.white;
-        labelText.alignment = TextAnchor.MiddleLeft;
-        labelText.font      = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        var lblRect = lblGO.GetComponent<RectTransform>();
-        lblRect.anchorMin = new Vector2(0f, 0f);
-        lblRect.anchorMax = new Vector2(1f, 1f);
-        lblRect.offsetMin = new Vector2(58f, 4f);
-        lblRect.offsetMax = new Vector2(-8f, -4f);
-    }
-
-    // ═══════════════════════════════════════════════
+    // ── Update ──────────────────────────────────────────────
     void Update()
     {
         DetectNearest();
-        UpdatePromptPosition();
-        HandleKeyboard();
-        AnimatePulse();
+        PositionPrompt();
+        HandleKey();
     }
 
-    // ── Tìm IInteractable gần nhất ────────────────
+    // ── Phát hiện vật thể gần nhất ─────────────────────────
     void DetectNearest()
     {
         var hits = Physics.OverlapSphere(transform.position, detectionRadius, interactLayer);
 
         IInteractable best    = null;
+        Collider      bestCol = null;
         Transform     bestTr  = null;
-        float         bestD   = float.MaxValue;
+        float         minDist = float.MaxValue;
 
         foreach (var col in hits)
         {
+            if (col.transform.root == transform.root) continue;   // bỏ qua Player
+
             var ia = col.GetComponent<IInteractable>()
                   ?? col.GetComponentInParent<IInteractable>();
             if (ia == null) continue;
 
-            float d = Vector3.Distance(transform.position, col.transform.position);
-            if (d < bestD) { bestD = d; best = ia; bestTr = col.transform; }
+            float d = (col.ClosestPoint(transform.position) - transform.position).magnitude;
+            if (d < minDist) { minDist = d; best = ia; bestCol = col; bestTr = ((MonoBehaviour)ia).transform; }
         }
 
-        _current          = best;
-        _currentTransform = bestTr;
+        _current    = best;
+        _currentCol = bestCol;
+        _currentTr  = bestTr;
 
-        SetPromptVisible(_current != null);
-        if (_current != null && labelText != null)
-            labelText.text = _current.InteractLabel;
+        bool show = _current != null;
+        if (_promptRect.gameObject.activeSelf != show)
+            _promptRect.gameObject.SetActive(show);
+
+        if (show)
+        {
+            _labelText.text     = _current.InteractLabel;
+            _promptBtn.interactable = _current.CanInteract;
+            _keyBadgeBg.color   = _current.CanInteract ? colorReady : colorDisabled;
+        }
     }
 
-    // ── Đặt prompt đúng vị trí màn hình ──────────
-    void UpdatePromptPosition()
-    {
-        if (_current == null || promptRect == null || _mainCam == null) return;
-
-        // World → screen
-        Vector3 worldPos  = _currentTransform.position + Vector3.up * 1.5f;
-        Vector3 screenPos = _mainCam.WorldToScreenPoint(worldPos);
-
-        // Nếu sau lưng camera thì ẩn
-        if (screenPos.z < 0f) { SetPromptVisible(false); return; }
-
-        // Chuyển sang canvas local space
-        promptRect.anchoredPosition = new Vector2(
-            screenPos.x - Screen.width  * 0.5f,
-            screenPos.y - Screen.height * 0f + screenOffset.y);
-
-        // Màu theo trạng thái
-        bool canDo = _current.CanInteract;
-        if (iconBg != null)
-            iconBg.color = canDo
-                ? (_isHovering ? new Color(0.15f, 0.15f, 0f, 0.85f) : new Color(0f, 0f, 0f, 0.78f))
-                : new Color(0.1f, 0.1f, 0.1f, 0.6f);
-
-        if (interactBtn != null)
-            interactBtn.interactable = canDo;
-    }
-
-    // ── Pulse animation ───────────────────────────
-    void AnimatePulse()
-    {
-        if (promptRect == null || _current == null) return;
-        float s = 1f + Mathf.Sin(Time.time * 3.5f) * 0.04f;
-        promptRect.localScale = Vector3.one * s;
-    }
-
-    // ── Phím E shortcut ───────────────────────────
-    void HandleKeyboard()
+    // ── Đặt vị trí prompt theo vật thể ─────────────────────
+    void PositionPrompt()
     {
         if (_current == null) return;
-        if (Input.GetKeyDown(KeyCode.E)) DoInteract();
+
+        var cam = Camera.main;
+        if (cam == null || _canvasRect == null) return;
+
+        Vector3 anchor;
+        if (_currentCol != null)
+        {
+            var b = _currentCol.bounds;
+            anchor = new Vector3(b.center.x, b.max.y + 0.3f, b.center.z);
+        }
+        else anchor = _currentTr.position + Vector3.up * 1.5f;
+
+        var screenPt = cam.WorldToScreenPoint(anchor);
+        if (screenPt.z <= 0f) { _promptRect.gameObject.SetActive(false); return; }
+
+        if (RectTransformUtility.ScreenPointToLocalPointInRectangle(
+            _canvasRect, screenPt, null, out Vector2 local))
+        {
+            float bob = Mathf.Sin(Time.time * 3.5f) * 3f;
+            var pos = local + promptOffset + new Vector2(0f, bob);
+
+            // Kẹp trong biên màn hình
+            var half  = _canvasRect.sizeDelta * 0.5f;
+            var pHalf = _promptRect.sizeDelta  * 0.5f;
+            pos.x = Mathf.Clamp(pos.x, -half.x + pHalf.x + 8f, half.x - pHalf.x - 8f);
+            pos.y = Mathf.Clamp(pos.y, -half.y + pHalf.y + 8f, half.y - pHalf.y - 8f);
+            _promptRect.anchoredPosition = pos;
+        }
+
+        // Pulse nhẹ
+        float s = 1f + Mathf.Sin(Time.time * 4f) * 0.025f;
+        _promptRect.localScale = new Vector3(s, s, 1f);
     }
 
-    // ── Click button ──────────────────────────────
-    void OnIconClicked()
+    // ── Phím E ──────────────────────────────────────────────
+    void HandleKey()
     {
-        if (_current == null || !_current.CanInteract) return;
-        DoInteract();
+        if (_current != null && _current.CanInteract && Input.GetKeyDown(KeyCode.E))
+            DoInteract();
     }
 
+    // ── Click LMB vào Button ────────────────────────────────
+    void OnButtonClicked()
+    {
+        if (_current != null && _current.CanInteract)
+            DoInteract();
+    }
+
+    // ── Thực hiện tương tác ─────────────────────────────────
     void DoInteract()
     {
         if (_current == null || !_current.CanInteract) return;
@@ -239,18 +237,11 @@ public class InteractionDetector : MonoBehaviour
         _anim?.TriggerInteract();
     }
 
-    void SetPromptVisible(bool show)
-    {
-        if (promptRect != null && promptRect.gameObject.activeSelf != show)
-            promptRect.gameObject.SetActive(show);
-    }
-
-    // ── Gizmo ─────────────────────────────────────
     void OnDrawGizmosSelected()
     {
-        Gizmos.color = new Color(0f, 1f, 1f, 0.2f);
+        Gizmos.color = new Color(0f, 1f, 0.7f, 0.15f);
         Gizmos.DrawSphere(transform.position, detectionRadius);
-        Gizmos.color = Color.cyan;
+        Gizmos.color = new Color(0f, 1f, 0.7f, 0.85f);
         Gizmos.DrawWireSphere(transform.position, detectionRadius);
     }
 }
