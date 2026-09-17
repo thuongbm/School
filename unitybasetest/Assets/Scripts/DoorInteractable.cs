@@ -21,9 +21,15 @@ public class DoorInteractable : MonoBehaviour, IInteractable
     public bool   CanInteract   => !_isAnimating;
 
     // ── State ──────────────────────────────────────
-    bool  _isOpen      = false;
-    bool  _isAnimating = false;
-    float _currentAngle = 0f;
+    bool       _isOpen      = false;
+    bool       _isAnimating = false;
+    float      _currentAngle = 0f;
+    Quaternion _initialLocalRot;
+
+    void Awake()
+    {
+        _initialLocalRot = transform.localRotation;
+    }
 
     public void Interact()
     {
@@ -37,18 +43,18 @@ public class DoorInteractable : MonoBehaviour, IInteractable
         _isAnimating = true;
         float startAngle = _currentAngle;
         float t = 0f;
-        float duration = Mathf.Abs(targetAngle - startAngle) / (openAngle * animSpeed);
+        float duration = Mathf.Abs(targetAngle - startAngle) / Mathf.Max(openAngle * animSpeed, 0.01f);
 
         while (t < 1f)
         {
             t += Time.deltaTime / Mathf.Max(duration, 0.01f);
             _currentAngle = Mathf.Lerp(startAngle, targetAngle, Mathf.SmoothStep(0f, 1f, t));
-            transform.localRotation = Quaternion.AngleAxis(_currentAngle, hingeAxis);
+            transform.localRotation = _initialLocalRot * Quaternion.AngleAxis(_currentAngle, hingeAxis);
             yield return null;
         }
 
         _currentAngle = targetAngle;
-        transform.localRotation = Quaternion.AngleAxis(_currentAngle, hingeAxis);
+        transform.localRotation = _initialLocalRot * Quaternion.AngleAxis(_currentAngle, hingeAxis);
         _isAnimating = false;
     }
 }

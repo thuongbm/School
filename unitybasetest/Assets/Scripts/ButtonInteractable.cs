@@ -14,9 +14,9 @@ public class ButtonInteractable : MonoBehaviour, IInteractable
 
     [Header("Events")]
     [Tooltip("Gọi khi nút được bấm / bật")]
-    public UnityEvent onPressed;
+    public UnityEvent onPressed = new UnityEvent();
     [Tooltip("Gọi khi nút được thả / tắt (chỉ với isToggle=true)")]
-    public UnityEvent onReleased;
+    public UnityEvent onReleased = new UnityEvent();
 
     // ── IInteractable ──────────────────────────────
     public string InteractLabel => _isActive ? $"[Tắt] {buttonName}" : $"[Bật] {buttonName}";
