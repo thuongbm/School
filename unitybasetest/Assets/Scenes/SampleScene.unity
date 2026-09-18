@@ -524,7 +524,7 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 378524078}
---- !u!114 &143000672
+--- !u!114 &143000676
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -533,13 +533,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 143000664}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bcfef1d9f04cc2548a69b9a715b1c475, type: 3}
+  m_Script: {fileID: 11500000, guid: 22ac6d3187f38a741a893ba4dc2b64ba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   doorName: "C\u1EEDa th\xF4ng gi\xF3 Room2 A"
-  openAngle: 90
+  slideDirectionLocal: {x: -0, y: -0, z: -1}
+  slideDistance: 2.6621804
   animSpeed: 2.5
-  hingeAxis: {x: 0, y: 1, z: 0}
 --- !u!1 &154536231 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 4686023361581739857, guid: c9ff998d776f1b94a813fe3430f3e997, type: 3}
@@ -567,7 +567,7 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 911836146}
---- !u!114 &154536239
+--- !u!114 &154536243
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -576,13 +576,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 154536231}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bcfef1d9f04cc2548a69b9a715b1c475, type: 3}
+  m_Script: {fileID: 11500000, guid: 22ac6d3187f38a741a893ba4dc2b64ba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   doorName: "C\u1EEDa th\xF4ng gi\xF3 Room2 B"
-  openAngle: 90
+  slideDirectionLocal: {x: -0, y: -0, z: -1}
+  slideDistance: 2.6621823
   animSpeed: 2.5
-  hingeAxis: {x: 0, y: 1, z: 0}
 --- !u!1 &176473806 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -6078392622764355622, guid: c9ff998d776f1b94a813fe3430f3e997, type: 3}
@@ -1259,7 +1259,7 @@ Transform:
   m_GameObject: {fileID: 418548382}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 1, z: 0, w: -0.00000004371139}
-  m_LocalPosition: {x: 24.9, y: 11.3, z: 15.3}
+  m_LocalPosition: {x: -0.04, y: 0.67, z: 6.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2343,13 +2343,13 @@ PrefabInstance:
       addedObject: {fileID: 964323151}
     - targetCorrespondingSourceObject: {fileID: -4931830253668557346, guid: 38ee434db6e7091459582ef0f87de731, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 964323155}
+      addedObject: {fileID: 964323159}
     - targetCorrespondingSourceObject: {fileID: -4026643281169321309, guid: 38ee434db6e7091459582ef0f87de731, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1139215241}
     - targetCorrespondingSourceObject: {fileID: -4026643281169321309, guid: 38ee434db6e7091459582ef0f87de731, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 1139215245}
+      addedObject: {fileID: 1139215249}
     - targetCorrespondingSourceObject: {fileID: -3106045130762367160, guid: 38ee434db6e7091459582ef0f87de731, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1150111908}
@@ -2806,7 +2806,7 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 1109039548}
---- !u!114 &964323155
+--- !u!114 &964323159
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2815,13 +2815,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 964323147}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bcfef1d9f04cc2548a69b9a715b1c475, type: 3}
+  m_Script: {fileID: 11500000, guid: 22ac6d3187f38a741a893ba4dc2b64ba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   doorName: "C\u1EEDa th\xF4ng gi\xF3 Room1 A"
-  openAngle: 90
+  slideDirectionLocal: {x: -1, y: -0, z: -0}
+  slideDistance: 2.6621807
   animSpeed: 2.5
-  hingeAxis: {x: 0, y: 1, z: 0}
 --- !u!1 &970055149 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2097347482915144802, guid: 38ee434db6e7091459582ef0f87de731, type: 3}
@@ -3611,7 +3611,7 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 1612257864}
---- !u!114 &1139215245
+--- !u!114 &1139215249
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -3620,13 +3620,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 1139215237}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bcfef1d9f04cc2548a69b9a715b1c475, type: 3}
+  m_Script: {fileID: 11500000, guid: 22ac6d3187f38a741a893ba4dc2b64ba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   doorName: "C\u1EEDa th\xF4ng gi\xF3 Room1 B"
-  openAngle: 90
+  slideDirectionLocal: {x: -0, y: -0, z: -1}
+  slideDistance: 2.6621807
   animSpeed: 2.5
-  hingeAxis: {x: 0, y: 1, z: 0}
 --- !u!1 &1150111904 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -3106045130762367160, guid: 38ee434db6e7091459582ef0f87de731, type: 3}
@@ -4017,13 +4017,13 @@ PrefabInstance:
       addedObject: {fileID: 154536235}
     - targetCorrespondingSourceObject: {fileID: 4686023361581739857, guid: c9ff998d776f1b94a813fe3430f3e997, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 154536239}
+      addedObject: {fileID: 154536243}
     - targetCorrespondingSourceObject: {fileID: 8495253022062173126, guid: c9ff998d776f1b94a813fe3430f3e997, type: 3}
       insertIndex: -1
       addedObject: {fileID: 143000668}
     - targetCorrespondingSourceObject: {fileID: 8495253022062173126, guid: c9ff998d776f1b94a813fe3430f3e997, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 143000672}
+      addedObject: {fileID: 143000676}
     - targetCorrespondingSourceObject: {fileID: 4630618604042286160, guid: c9ff998d776f1b94a813fe3430f3e997, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1484618661}
@@ -4137,7 +4137,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 14, y: 3, z: 8}
+  m_Size: {x: 19.7, y: 3, z: 39.9}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!4 &1277104845
 Transform:
@@ -4148,7 +4148,7 @@ Transform:
   m_GameObject: {fileID: 1277104842}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 25.5, y: 1.5, z: -17.38}
+  m_LocalPosition: {x: 27.7, y: 1.5, z: 1.8}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
