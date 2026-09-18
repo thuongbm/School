@@ -1,12 +1,11 @@
 using UnityEngine;
-using System.Collections;
 
 /// <summary>
 /// Cửa trượt (sliding door): khi tương tác, cửa trượt ngang (theo trục chỉ định trong local space)
 /// một khoảng đúng bằng bề rộng của cửa/ống thông gió, để mở hoàn toàn lối đi
 /// (không như cửa bản lề có thể vẫn choán chỗ trong không gian hẹp).
 /// </summary>
-public class SlidingDoorInteractable : MonoBehaviour, IInteractable
+public class SlidingDoorInteractable : InteractableBase
 {
     [Header("Cửa")]
     public string doorName = "Cửa thông gió";
@@ -21,13 +20,9 @@ public class SlidingDoorInteractable : MonoBehaviour, IInteractable
     [Tooltip("Tốc độ trượt (1 / giây, giá trị càng lớn trượt càng nhanh)")]
     public float animSpeed = 2.5f;
 
-    // ── IInteractable ──────────────────────────────
-    public string InteractLabel => _isOpen ? $"[Đóng] {doorName}" : $"[Mở] {doorName}";
-    public bool   CanInteract   => !_isAnimating;
+    public override string InteractLabel => _isOpen ? $"[Đóng] {doorName}" : $"[Mở] {doorName}";
 
-    // ── State ──────────────────────────────────────
-    bool    _isOpen      = false;
-    bool    _isAnimating = false;
+    bool    _isOpen;
     Vector3 _closedLocalPos;
     Vector3 _openLocalPos;
 
@@ -37,28 +32,17 @@ public class SlidingDoorInteractable : MonoBehaviour, IInteractable
         _openLocalPos   = _closedLocalPos + slideDirectionLocal.normalized * slideDistance;
     }
 
-    public void Interact()
+    public override void Interact()
     {
-        if (_isAnimating) return;
-        StopAllCoroutines();
-        StartCoroutine(SlideRoutine(!_isOpen));
-    }
+        if (!CanInteract) return;
 
-    IEnumerator SlideRoutine(bool opening)
-    {
-        _isAnimating = true;
-        Vector3 start  = transform.localPosition;
-        Vector3 target = opening ? _openLocalPos : _closedLocalPos;
-
-        float t = 0f;
-        while (t < 1f)
-        {
-            t += Time.deltaTime * animSpeed;
-            transform.localPosition = Vector3.Lerp(start, target, Mathf.Clamp01(t));
-            yield return null;
-        }
-        transform.localPosition = target;
+        bool    opening = !_isOpen;
+        Vector3 start   = transform.localPosition;
+        Vector3 target  = opening ? _openLocalPos : _closedLocalPos;
+        float   duration = 1f / Mathf.Max(animSpeed, 0.01f);
         _isOpen = opening;
-        _isAnimating = false;
+
+        StartCoroutine(AnimateLerp(duration,
+            p => transform.localPosition = Vector3.Lerp(start, target, p)));
     }
 }

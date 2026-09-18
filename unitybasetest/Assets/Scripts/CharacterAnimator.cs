@@ -3,7 +3,6 @@ using System.Collections;
 
 /// <summary>
 /// Procedural animation cho nhân vật Roblox-style.
-/// Không cần animation clip – tất cả tính bằng sin/cos wave trên các xương.
 /// </summary>
 public class CharacterAnimator : MonoBehaviour
 {
@@ -120,7 +119,6 @@ public class CharacterAnimator : MonoBehaviour
 
         bool grounded = _cc != null && _cc.isGrounded;
 
-        // NOTE: Phím E được xử lý bởi InteractionDetector → TriggerInteract()
 
         // Phase tăng theo speed
         _phase += Time.deltaTime * runFrequency * Mathf.PI * 2f * Mathf.Max(speed, 0.3f);
@@ -285,7 +283,6 @@ public class CharacterAnimator : MonoBehaviour
 
             yield return null;
         }
-        // Giữ nguyên pose death
     }
 
     // ────────── Utility ──────────

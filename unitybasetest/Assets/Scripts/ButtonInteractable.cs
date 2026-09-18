@@ -5,7 +5,7 @@ using UnityEngine.Events;
 /// Nút bấm generic – nhấn E để kích hoạt.
 /// Hỗ trợ: nhấn 1 lần (toggle) hoặc nhấn giữ, gắn UnityEvent để kết nối bất kỳ logic nào.
 /// </summary>
-public class ButtonInteractable : MonoBehaviour, IInteractable
+public class ButtonInteractable : InteractableBase
 {
     [Header("Settings")]
     public string buttonName   = "Nút bấm";
@@ -18,17 +18,15 @@ public class ButtonInteractable : MonoBehaviour, IInteractable
     [Tooltip("Gọi khi nút được thả / tắt (chỉ với isToggle=true)")]
     public UnityEvent onReleased = new UnityEvent();
 
-    // ── IInteractable ──────────────────────────────
-    public string InteractLabel => _isActive ? $"[Tắt] {buttonName}" : $"[Bật] {buttonName}";
-    public bool   CanInteract   => true;
+    public override string InteractLabel => _isActive ? $"[Tắt] {buttonName}" : $"[Bật] {buttonName}";
+    public override bool   CanInteract   => true;
 
-    // ── State ──────────────────────────────────────
-    bool    _isActive = false;
+    bool    _isActive;
     Vector3 _restPos;
 
     void Awake() => _restPos = transform.localPosition;
 
-    public void Interact()
+    public override void Interact()
     {
         if (isToggle)
         {
@@ -48,4 +46,3 @@ public class ButtonInteractable : MonoBehaviour, IInteractable
     void Press()   => transform.localPosition = _restPos - Vector3.up * pressDownAmt;
     void Release() => transform.localPosition = _restPos;
 }
-
