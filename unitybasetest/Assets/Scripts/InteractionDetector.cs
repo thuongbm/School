@@ -157,7 +157,10 @@ public class InteractionDetector : MonoBehaviour
                   ?? col.GetComponentInParent<IInteractable>();
             if (ia == null) continue;
 
-            float d = (col.ClosestPoint(transform.position) - transform.position).magnitude;
+            // Dùng bounds.ClosestPoint thay vì col.ClosestPoint: col.ClosestPoint không đáng tin
+            // (trả về sai / bằng chính điểm truy vấn) với MeshCollider non-convex, khiến vật thể đó
+            // luôn bị tính khoảng cách ~0 và "chiếm" quyền tương tác dù đứng xa nó hơn vật khác.
+            float d = (col.bounds.ClosestPoint(transform.position) - transform.position).magnitude;
             if (d < minDist) { minDist = d; best = ia; bestCol = col; bestTr = ((MonoBehaviour)ia).transform; }
         }
 
