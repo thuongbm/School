@@ -2,7 +2,7 @@ using UnityEngine;
 
 /// <summary>
 /// Third-person orbit camera.
-/// - Kéo chuột phải / giữ RMB để xoay quanh nhân vật (pitch + yaw)
+/// - Giữ chuột trái (LMB) và kéo chuột để xoay quanh nhân vật (pitch + yaw)
 /// - Scroll wheel để zoom in/out
 /// - Nhân vật luôn di chuyển theo hướng camera nhìn
 /// Gắn vào Main Camera, kéo Player vào Target.
@@ -68,9 +68,9 @@ public class FollowCamera : MonoBehaviour
     {
         if (target == null) return;
 
-        // ── Chỉ xoay camera khi ĐANG giữ RMB ──
-        bool rmb = Input.GetMouseButton(1);
-        if (rmb)
+        // ── Chỉ xoay camera khi ĐANG giữ LMB (chuột trái) ──
+        bool lmb = Input.GetMouseButton(0);
+        if (lmb)
         {
             float mouseX = Input.GetAxis("Mouse X") * sensitivityX * Time.deltaTime;
             float mouseY = Input.GetAxis("Mouse Y") * sensitivityY * Time.deltaTime;
@@ -111,8 +111,6 @@ public class FollowCamera : MonoBehaviour
         }
         return wantedDist;
     }
-
-
 
     /// <summary>
     /// Hướng nhìn phẳng của camera (dùng bởi PlayerController để di chuyển theo camera).
